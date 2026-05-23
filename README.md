@@ -23,7 +23,7 @@ A .NET 8 Minimal API backend for task management, built as a technical assessmen
 |---------|----------------|
 | Runtime | .NET 8 |
 | API style | ASP.NET Core Minimal API |
-| Database | SQL Server (Docker) + EF Core 8 |
+| Database | SQL Server + EF Core 8 |
 | Auth | HTTP Basic Auth + BCrypt (no JWT) |
 | Validation | FluentValidation 11 |
 | Docs | Swashbuckle / Swagger UI |
@@ -34,14 +34,7 @@ A .NET 8 Minimal API backend for task management, built as a technical assessmen
 ## Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
-- Docker (for SQL Server)
-
-### Start SQL Server in Docker
-
-```bash
-docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Local@1234" \
-  -p 1433:1433 --name softone-sql -d mcr.microsoft.com/mssql/server:2022-latest
-```
+- A running SQL Server instance accessible on `localhost,1433`
 
 ---
 
@@ -50,17 +43,17 @@ docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Local@1234" \
 ### 1. Clone and restore
 
 ```bash
-git clone <your-repo-url>
-cd SoftOne
+git clone https://github.com/AsiriZenith/softone-task-management-api.git
+cd softone-task-management-api
 dotnet restore
 ```
 
 ### 2. Configure the connection string
 
-Open `src/SoftOne.Api/appsettings.json` and update the password if you used something different:
+Open `src/SoftOne.Api/appsettings.json` and set your SQL Server credentials:
 
 ```json
-"DefaultConnection": "Server=localhost,1433;Database=SoftOneDb;User Id=sa;Password=Local@1234;TrustServerCertificate=True;"
+"DefaultConnection": "Server=localhost,1433;Database=SoftOneDb;User Id=sa;Password=YOUR_PASSWORD;TrustServerCertificate=True;"
 ```
 
 ### 3. Apply the database migration
@@ -88,25 +81,21 @@ Open Swagger UI: **https://localhost:7091/swagger**
 
 ## Authentication
 
-All task endpoints require **HTTP Basic Authentication**.
-
-| Username | Password |
-|----------|----------|
-| `admin` | `Admin@123` |
+All task endpoints require **HTTP Basic Authentication**. A hardcoded `admin` account is used for this assessment (credentials are configured in `SoftOne.Auth/AuthCredentials.cs`).
 
 ### How to authenticate
 
 **Using curl:**
 
 ```bash
-curl -k -u admin:Admin@123 https://localhost:7091/api/tasks
+curl -k -u admin:<password> https://localhost:7091/api/tasks
 ```
 
 **Using Swagger UI:**
-Click the **Authorize** button (🔒) and enter `admin` / `Admin@123`.
+Click the **Authorize** button (🔒) and enter the credentials.
 
 **Using the `.http` file:**
-Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — credentials are pre-filled.
+Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — update the `@password` variable at the top.
 
 > No tokens are issued. Credentials are sent with every request via the `Authorization: Basic` header.
 
@@ -143,25 +132,25 @@ Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — credentials are 
 ### Example requests
 
 ```bash
-# Login
+# Login (no auth required)
 curl -k -X POST https://localhost:7091/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"Admin@123"}'
+  -d '{"username":"admin","password":"<password>"}'
 
 # Create a task
-curl -k -u admin:Admin@123 -X POST https://localhost:7091/api/tasks \
+curl -k -u admin:<password> -X POST https://localhost:7091/api/tasks \
   -H "Content-Type: application/json" \
   -d '{"title":"Finish report","priority":"High","dueDate":"2026-12-31T00:00:00Z"}'
 
 # List high-priority tasks, newest first
-curl -k -u admin:Admin@123 \
+curl -k -u admin:<password> \
   "https://localhost:7091/api/tasks?priority=High&sortBy=createdAt&sortDirection=desc"
 
 # Mark a task as completed
-curl -k -u admin:Admin@123 -X PATCH https://localhost:7091/api/tasks/1/complete
+curl -k -u admin:<password> -X PATCH https://localhost:7091/api/tasks/1/complete
 
 # Delete a task (soft delete)
-curl -k -u admin:Admin@123 -X DELETE https://localhost:7091/api/tasks/1
+curl -k -u admin:<password> -X DELETE https://localhost:7091/api/tasks/1
 ```
 
 ### Response shape
