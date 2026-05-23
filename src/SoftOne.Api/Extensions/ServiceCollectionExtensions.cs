@@ -14,9 +14,7 @@ public static class ServiceCollectionExtensions
         services.Configure<AppSettings>(configuration.GetSection(AppSettings.SectionName));
 
         services.AddDatabase(configuration);
-
-        // TODO Phase 6: register FluentValidation validators.
-        // services.AddValidatorsFromAssemblyContaining<Program>();
+        services.AddValidation();
 
         services.AddScoped<IAuthService, AuthService>();
 
