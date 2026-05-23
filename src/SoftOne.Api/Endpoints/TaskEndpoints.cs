@@ -16,32 +16,38 @@ public static class TaskEndpoints
         group.MapGet("/", GetAllTasksAsync)
             .WithName("GetTasks")
             .Produces<ApiSuccessResponse<IReadOnlyList<TaskResponse>>>(StatusCodes.Status200OK)
-            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         group.MapGet("/{id:int}", GetTaskByIdAsync)
             .WithName("GetTaskById")
             .Produces<ApiSuccessResponse<TaskResponse>>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapPost("/", CreateTaskAsync)
             .WithName("CreateTask")
             .Produces<ApiSuccessResponse<TaskResponse>>(StatusCodes.Status201Created)
-            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
         group.MapPut("/{id:int}", UpdateTaskAsync)
             .WithName("UpdateTask")
             .Produces<ApiSuccessResponse<TaskResponse>>(StatusCodes.Status200OK)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapPatch("/{id:int}/complete", CompleteTaskAsync)
             .WithName("CompleteTask")
             .Produces<ApiSuccessResponse<TaskResponse>>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
         group.MapDelete("/{id:int}", DeleteTaskAsync)
             .WithName("DeleteTask")
             .Produces(StatusCodes.Status204NoContent)
+            .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
         return app;

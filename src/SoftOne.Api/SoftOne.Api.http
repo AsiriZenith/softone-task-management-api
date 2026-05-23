@@ -1,6 +1,28 @@
-@SoftOne.Api_HostAddress = http://localhost:5298
+@SoftOne.Api_HostAddress = https://localhost:7091
+@username = admin
+@password = Admin@123
 
-GET {{SoftOne.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Login (no Basic auth required)
+POST {{SoftOne.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "username": "{{username}}",
+  "password": "{{password}}"
+}
+
+### List tasks
+GET {{SoftOne.Api_HostAddress}}/api/tasks?sortBy=createdAt&sortDirection=desc
+Authorization: Basic {{username}} {{password}}
+
+### Create task
+POST {{SoftOne.Api_HostAddress}}/api/tasks
+Authorization: Basic {{username}} {{password}}
+Content-Type: application/json
+
+{
+  "title": "Sample task",
+  "description": "Created from SoftOne.Api.http",
+  "priority": "Medium",
+  "dueDate": "2026-12-31T00:00:00Z"
+}

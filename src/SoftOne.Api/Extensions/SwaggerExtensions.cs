@@ -22,7 +22,7 @@ public static class SwaggerExtensions
                 Type = SecuritySchemeType.Http,
                 Scheme = "basic",
                 In = ParameterLocation.Header,
-                Description = "HTTP Basic Authentication (username and password). No JWT or bearer tokens."
+                Description = "HTTP Basic Authentication"
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
