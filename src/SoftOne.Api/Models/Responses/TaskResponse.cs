@@ -1,6 +1,6 @@
-namespace SoftOne.Api.Entities;
+namespace SoftOne.Api.Models.Responses;
 
-public class TaskItem
+public class TaskResponse
 {
     public int Id { get; set; }
 
@@ -9,8 +9,4 @@ public class TaskItem
     public string? Description { get; set; }
 
     public bool IsCompleted { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
 }

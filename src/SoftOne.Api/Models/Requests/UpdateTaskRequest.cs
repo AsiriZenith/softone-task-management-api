@@ -1,9 +1,7 @@
-namespace SoftOne.Api.Responses;
+namespace SoftOne.Api.Models.Requests;
 
-public class TaskResponse
+public class UpdateTaskRequest
 {
-    public int Id { get; set; }
-
     public string Title { get; set; } = string.Empty;
 
     public string? Description { get; set; }

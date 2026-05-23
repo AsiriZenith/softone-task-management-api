@@ -1,4 +1,4 @@
-namespace SoftOne.Api.Requests;
+namespace SoftOne.Api.Models.Requests;
 
 public class CreateTaskRequest
 {

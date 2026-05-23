@@ -1,4 +1,4 @@
-using SoftOne.Api.Entities;
+using SoftOne.Api.Data.Entities;
 
 namespace SoftOne.Api.Services;
 

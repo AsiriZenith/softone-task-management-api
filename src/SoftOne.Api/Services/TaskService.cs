@@ -1,8 +1,11 @@
 using SoftOne.Api.Data;
-using SoftOne.Api.Entities;
+using SoftOne.Api.Data.Entities;
 
 namespace SoftOne.Api.Services;
 
+/// <summary>
+/// Task business logic will be implemented in Phase 7.
+/// </summary>
 public class TaskService : ITaskService
 {
     private readonly AppDbContext _dbContext;

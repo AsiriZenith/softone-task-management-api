@@ -1,9 +1,9 @@
-namespace SoftOne.Api.Tests.Validators;
+namespace SoftOne.Auth.Tests.Helpers;
 
 /// <summary>
-/// Validator unit tests will be implemented in Phase 6.
+/// Unit tests for PasswordHasher will be implemented in Phase 3.
 /// </summary>
-public class CreateTaskRequestValidatorTests
+public class PasswordHasherTests
 {
     [Fact]
     public void Placeholder_Phase1_SolutionVerification()

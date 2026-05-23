@@ -6,31 +6,18 @@ public static class ApplicationBuilderExtensions
 {
     public static WebApplication ConfigureMiddlewarePipeline(this WebApplication app)
     {
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseSwagger();
-            app.UseSwaggerUI(options =>
-            {
-                options.SwaggerEndpoint("/swagger/v1/swagger.json", "SoftOne API v1");
-            });
-        }
+        app.UseSwaggerDocumentation();
 
         if (!app.Environment.IsEnvironment("Testing"))
         {
             app.UseHttpsRedirection();
         }
+
+        // TODO Phase 4: implement global exception handling behavior.
         app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+        // TODO Phase 4: implement authentication middleware behavior.
         app.UseMiddleware<AuthenticationMiddleware>();
-
-        return app;
-    }
-
-    public static WebApplication MapApplicationEndpoints(this WebApplication app)
-    {
-        app.MapGet("/health", () => Results.Ok(new { status = "healthy" }))
-            .WithName("HealthCheck")
-            .WithTags("Health")
-            .WithOpenApi();
 
         return app;
     }

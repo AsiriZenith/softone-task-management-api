@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using SoftOne.Api.Entities;
+using SoftOne.Api.Data.Entities;
 
 namespace SoftOne.Api.Data;
 
@@ -15,5 +15,36 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+
+    public override int SaveChanges()
+    {
+        ApplyTimestamps();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyTimestamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
+    private void ApplyTimestamps()
+    {
+        var entries = ChangeTracker.Entries<TaskItem>();
+
+        foreach (var entry in entries)
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedAt = DateTime.UtcNow;
+            }
+
+            if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = DateTime.UtcNow;
+            }
+        }
     }
 }

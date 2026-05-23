@@ -1,9 +1,11 @@
+using SoftOne.Api.Endpoints;
 using SoftOne.Api.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApplicationServices(builder.Configuration);
-builder.Services.AddSwaggerDocumentation();
+builder.Services
+    .AddApplicationServices(builder.Configuration)
+    .AddSwaggerDocumentation();
 
 var app = builder.Build();
 
