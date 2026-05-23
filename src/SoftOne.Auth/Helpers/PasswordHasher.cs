@@ -1,17 +1,17 @@
 namespace SoftOne.Auth.Helpers;
 
-/// <summary>
-/// Password hashing will be implemented in Phase 3.
-/// </summary>
 public static class PasswordHasher
 {
-    public static string Hash(string password)
+    public static string HashPassword(string password)
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(password);
+        return BCrypt.Net.BCrypt.HashPassword(password);
     }
 
-    public static bool Verify(string password, string passwordHash)
+    public static bool VerifyPassword(string password, string hash)
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrWhiteSpace(password);
+        ArgumentException.ThrowIfNullOrWhiteSpace(hash);
+        return BCrypt.Net.BCrypt.Verify(password, hash);
     }
 }

@@ -18,7 +18,6 @@ public static class ServiceCollectionExtensions
         // TODO Phase 6: register FluentValidation validators.
         // services.AddValidatorsFromAssemblyContaining<Program>();
 
-        // TODO Phase 3: wire authentication services from SoftOne.Auth.
         services.AddScoped<IAuthService, AuthService>();
 
         // TODO Phase 7: implement task service business logic.
