@@ -18,7 +18,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAuthService, AuthService>();
 
-        // TODO Phase 7: implement task service business logic.
         services.AddScoped<ITaskService, TaskService>();
 
         return services;

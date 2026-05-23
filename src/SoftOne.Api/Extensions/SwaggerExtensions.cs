@@ -24,6 +24,21 @@ public static class SwaggerExtensions
                 In = ParameterLocation.Header,
                 Description = "HTTP Basic Authentication (username and password). No JWT or bearer tokens."
             });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Basic"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
         });
 
         return services;
