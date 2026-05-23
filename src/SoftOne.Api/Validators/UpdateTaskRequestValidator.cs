@@ -1,5 +1,5 @@
 using FluentValidation;
-using SoftOne.Api.Models.Requests;
+using SoftOne.Api.DTOs.Requests;
 
 namespace SoftOne.Api.Validators;
 

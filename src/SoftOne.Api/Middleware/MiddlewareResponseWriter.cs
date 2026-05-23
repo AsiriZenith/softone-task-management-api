@@ -1,5 +1,5 @@
 using System.Text.Json;
-using SoftOne.Api.Models.Responses;
+using SoftOne.Api.DTOs.Responses;
 
 namespace SoftOne.Api.Middleware;
 
@@ -25,12 +25,7 @@ internal static class MiddlewareResponseWriter
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
-        var response = new ErrorResponse
-        {
-            Success = false,
-            Message = message,
-            Errors = errors ?? Array.Empty<string>()
-        };
+        var response = ErrorResponse.CreateFailure(message, errors);
 
         await JsonSerializer.SerializeAsync(context.Response.Body, response, JsonOptions);
     }
