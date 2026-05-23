@@ -1,19 +1,34 @@
 namespace SoftOne.Api.Middleware;
 
-/// <summary>
-/// Exception handling behavior will be implemented in Phase 4.
-/// </summary>
 public class GlobalExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
 
-    public GlobalExceptionHandlingMiddleware(RequestDelegate next)
+    public GlobalExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<GlobalExceptionHandlingMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        await _next(context);
+        try
+        {
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unhandled exception occurred while processing {Method} {Path}.",
+                context.Request.Method,
+                context.Request.Path);
+
+            await MiddlewareResponseWriter.WriteErrorAsync(
+                context,
+                StatusCodes.Status500InternalServerError,
+                "An unexpected error occurred.");
+        }
     }
 }

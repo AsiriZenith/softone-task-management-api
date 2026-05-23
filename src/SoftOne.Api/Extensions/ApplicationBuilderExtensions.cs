@@ -13,10 +13,7 @@ public static class ApplicationBuilderExtensions
             app.UseHttpsRedirection();
         }
 
-        // TODO Phase 4: implement global exception handling behavior.
         app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
-
-        // TODO Phase 4: implement authentication middleware behavior.
         app.UseMiddleware<AuthenticationMiddleware>();
 
         return app;
