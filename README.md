@@ -1,0 +1,290 @@
+# SoftOne — Task Management API
+
+A .NET 8 Minimal API backend for task management, built as a technical assessment project. Clean architecture, HTTP Basic Authentication, EF Core + SQL Server, and full unit test coverage.
+
+---
+
+## What this does
+
+- Full **CRUD** for tasks (create, read, update, soft delete)
+- Mark a task as **completed**
+- **Filter** by completion status or priority
+- **Sort** by created date or due date
+- **HTTP Basic Authentication** on all task endpoints
+- Soft delete — deleted tasks are hidden, not permanently removed
+- Validation via **FluentValidation** before any business logic runs
+- Interactive **Swagger UI** in development
+
+---
+
+## Tech stack
+
+| Concern | Library / Tool |
+|---------|----------------|
+| Runtime | .NET 8 |
+| API style | ASP.NET Core Minimal API |
+| Database | SQL Server (Docker) + EF Core 8 |
+| Auth | HTTP Basic Auth + BCrypt (no JWT) |
+| Validation | FluentValidation 11 |
+| Docs | Swashbuckle / Swagger UI |
+| Testing | xUnit + Moq + FluentAssertions |
+
+---
+
+## Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download)
+- Docker (for SQL Server)
+
+### Start SQL Server in Docker
+
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=Local@1234" \
+  -p 1433:1433 --name softone-sql -d mcr.microsoft.com/mssql/server:2022-latest
+```
+
+---
+
+## Getting started
+
+### 1. Clone and restore
+
+```bash
+git clone <your-repo-url>
+cd SoftOne
+dotnet restore
+```
+
+### 2. Configure the connection string
+
+Open `src/SoftOne.Api/appsettings.json` and update the password if you used something different:
+
+```json
+"DefaultConnection": "Server=localhost,1433;Database=SoftOneDb;User Id=sa;Password=Local@1234;TrustServerCertificate=True;"
+```
+
+### 3. Apply the database migration
+
+```bash
+dotnet ef database update --project src/SoftOne.Api
+```
+
+This creates the **SoftOneDb** database with the `Tasks` table automatically.
+
+### 4. Run the API
+
+```bash
+dotnet run --project src/SoftOne.Api --launch-profile https
+```
+
+The API starts at:
+
+- HTTPS → **https://localhost:7091**
+- HTTP  → **http://localhost:5298**
+
+Open Swagger UI: **https://localhost:7091/swagger**
+
+---
+
+## Authentication
+
+All task endpoints require **HTTP Basic Authentication**.
+
+| Username | Password |
+|----------|----------|
+| `admin` | `Admin@123` |
+
+### How to authenticate
+
+**Using curl:**
+
+```bash
+curl -k -u admin:Admin@123 https://localhost:7091/api/tasks
+```
+
+**Using Swagger UI:**
+Click the **Authorize** button (🔒) and enter `admin` / `Admin@123`.
+
+**Using the `.http` file:**
+Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — credentials are pre-filled.
+
+> No tokens are issued. Credentials are sent with every request via the `Authorization: Basic` header.
+
+---
+
+## API endpoints
+
+### Authentication
+
+| Method | Route | Auth required | Description |
+|--------|-------|:---:|-------------|
+| POST | `/api/auth/login` | No | Validate credentials |
+
+### Tasks
+
+| Method | Route | Auth required | Description |
+|--------|-------|:---:|-------------|
+| GET | `/api/tasks` | Yes | List active tasks |
+| GET | `/api/tasks/{id}` | Yes | Get a task by ID |
+| POST | `/api/tasks` | Yes | Create a task |
+| PUT | `/api/tasks/{id}` | Yes | Update a task |
+| PATCH | `/api/tasks/{id}/complete` | Yes | Mark as completed |
+| DELETE | `/api/tasks/{id}` | Yes | Soft delete a task |
+
+### Query parameters for `GET /api/tasks`
+
+| Parameter | Values | Example |
+|-----------|--------|---------|
+| `isCompleted` | `true` / `false` | `?isCompleted=false` |
+| `priority` | `Low` / `Medium` / `High` | `?priority=High` |
+| `sortBy` | `createdAt` (default) / `dueDate` | `?sortBy=dueDate` |
+| `sortDirection` | `asc` (default) / `desc` | `?sortDirection=desc` |
+
+### Example requests
+
+```bash
+# Login
+curl -k -X POST https://localhost:7091/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin@123"}'
+
+# Create a task
+curl -k -u admin:Admin@123 -X POST https://localhost:7091/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Finish report","priority":"High","dueDate":"2026-12-31T00:00:00Z"}'
+
+# List high-priority tasks, newest first
+curl -k -u admin:Admin@123 \
+  "https://localhost:7091/api/tasks?priority=High&sortBy=createdAt&sortDirection=desc"
+
+# Mark a task as completed
+curl -k -u admin:Admin@123 -X PATCH https://localhost:7091/api/tasks/1/complete
+
+# Delete a task (soft delete)
+curl -k -u admin:Admin@123 -X DELETE https://localhost:7091/api/tasks/1
+```
+
+### Response shape
+
+**Success:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "title": "Finish report",
+    "description": null,
+    "isCompleted": false,
+    "priority": "High",
+    "dueDate": "2026-12-31T00:00:00Z",
+    "createdAt": "2026-05-23T10:00:00Z",
+    "updatedAt": null
+  }
+}
+```
+
+**Error (validation):**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": ["Title is required.", "Due date cannot be in the past."]
+}
+```
+
+---
+
+## Project structure
+
+```
+SoftOne/
+├── src/
+│   ├── SoftOne.Api/            # Main Web API project
+│   │   ├── DTOs/               # Request & response contracts
+│   │   │   ├── Requests/
+│   │   │   └── Responses/
+│   │   ├── Data/               # EF Core — entities, configs, migrations
+│   │   │   ├── Entities/
+│   │   │   ├── Configurations/
+│   │   │   └── Migrations/
+│   │   ├── Endpoints/          # Minimal API route handlers
+│   │   ├── Extensions/         # DI, Swagger, DB registration
+│   │   ├── Middleware/         # Auth + global exception handling
+│   │   ├── Services/           # Business logic (TaskService)
+│   │   ├── Validators/         # FluentValidation validators
+│   │   └── Program.cs
+│   └── SoftOne.Auth/           # Authentication library
+│       ├── Helpers/            # PasswordHasher (BCrypt)
+│       ├── Interfaces/         # IAuthService
+│       ├── Models/             # AuthResult, LoginRequest
+│       └── Services/           # AuthService
+└── tests/
+    ├── SoftOne.Api.Tests/      # Middleware, service, validator, endpoint tests
+    └── SoftOne.Auth.Tests/     # BCrypt & credential validation tests
+```
+
+---
+
+## Running the tests
+
+```bash
+dotnet test SoftOne.sln
+```
+
+| Project | Tests | Covers |
+|---------|------:|--------|
+| SoftOne.Api.Tests | 31 | Middleware, validators, services, endpoints |
+| SoftOne.Auth.Tests | 11 | PasswordHasher, AuthService credentials |
+| **Total** | **42** | |
+
+Run a specific layer:
+
+```bash
+# Validators only
+dotnet test --filter "FullyQualifiedName~Validators"
+
+# Auth library only
+dotnet test tests/SoftOne.Auth.Tests
+```
+
+---
+
+## Database migrations
+
+```bash
+# Apply pending migrations
+dotnet ef database update --project src/SoftOne.Api
+
+# Add a new migration
+dotnet ef migrations add <MigrationName> \
+  --project src/SoftOne.Api \
+  --output-dir Data/Migrations
+
+# Remove the last migration (if not yet applied)
+dotnet ef migrations remove --project src/SoftOne.Api
+```
+
+---
+
+## Stopping the API before rebuilding
+
+The API locks DLLs while it is running. Always stop it before running `dotnet build`:
+
+- **Terminal:** press `Ctrl+C`
+- **Visual Studio:** press `Shift+F5`
+
+---
+
+## Documentation
+
+All design documents live in the `docs/` folder:
+
+| File | Contents |
+|------|----------|
+| `architecture.md` | Layered architecture, middleware pipeline, auth flow |
+| `api-spec.md` | Full endpoint reference, request/response shapes |
+| `database-design.md` | Schema, EF Core config, soft delete strategy |
+| `prd.md` | Product requirements |
+| `implementation-plan.md` | Phase-by-phase build plan |
+| `testing-strategy.md` | Testing principles and test coverage guide |
+| `development-workflow.md` | Git workflow, Cursor AI usage, commit strategy |
