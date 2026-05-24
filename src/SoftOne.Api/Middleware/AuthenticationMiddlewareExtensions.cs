@@ -4,6 +4,11 @@ internal static class AuthenticationMiddlewareExtensions
 {
     public static bool RequiresAuthentication(HttpContext context)
     {
+        if (HttpMethods.IsOptions(context.Request.Method))
+        {
+            return false;
+        }
+
         var path = context.Request.Path;
 
         if (!path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))

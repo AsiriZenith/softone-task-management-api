@@ -56,6 +56,26 @@ public class AuthenticationMiddlewareTests
     }
 
     [Fact]
+    public async Task InvokeAsync_OptionsRequest_SkipsAuthentication()
+    {
+        var context = MiddlewareTestContext.Create(method: "OPTIONS", authorizationHeader: null);
+        var nextCalled = false;
+        var middleware = CreateMiddleware(_ =>
+        {
+            nextCalled = true;
+            return SetSuccessResponse(context);
+        });
+
+        await middleware.InvokeAsync(context, _authServiceMock.Object);
+
+        nextCalled.Should().BeTrue();
+        context.Response.StatusCode.Should().Be(StatusCodes.Status200OK);
+        _authServiceMock.Verify(
+            s => s.ValidateCredentials(It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task InvokeAsync_ValidCredentials_CallsNextMiddleware()
     {
         _authServiceMock

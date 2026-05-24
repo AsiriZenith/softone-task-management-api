@@ -8,12 +8,13 @@ public static class ApplicationBuilderExtensions
     {
         app.UseSwaggerDocumentation();
 
-        if (!app.Environment.IsEnvironment("Testing"))
+        if (app.Environment.IsProduction())
         {
             app.UseHttpsRedirection();
         }
 
         app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+        app.UseCors(CorsExtensions.FrontendPolicy);
         app.UseMiddleware<AuthenticationMiddleware>();
 
         return app;

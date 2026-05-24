@@ -66,16 +66,35 @@ This creates the **SoftOneDb** database with the `Tasks` table automatically.
 
 ### 4. Run the API
 
+For local development with an Angular frontend on `http://localhost:4200`, use the **http** launch profile (no HTTPS redirect):
+
+```bash
+dotnet run --project src/SoftOne.Api --launch-profile http
+```
+
+The API starts at **http://localhost:5298**. Open Swagger UI: **http://localhost:5298/swagger**
+
+For HTTPS in development (optional):
+
 ```bash
 dotnet run --project src/SoftOne.Api --launch-profile https
 ```
 
-The API starts at:
+---
 
-- HTTPS → **https://localhost:7091**
-- HTTP  → **http://localhost:5298**
+## Frontend integration (Angular)
 
-Open Swagger UI: **https://localhost:7091/swagger**
+See **[docs/frontend-integration.md](docs/frontend-integration.md)** for a full copy-paste guide for the frontend team.
+
+The API allows cross-origin requests from **`http://localhost:4200`** in development via CORS. Configure your Angular app to call:
+
+```
+http://localhost:5298
+```
+
+Send credentials on each request using HTTP Basic Auth (e.g. Angular `HttpClient` with an `Authorization` header). Preflight `OPTIONS` requests are allowed without authentication.
+
+To add another origin, update `Cors:AllowedOrigins` in `src/SoftOne.Api/appsettings.json`.
 
 ---
 
@@ -88,7 +107,7 @@ All task endpoints require **HTTP Basic Authentication**. A hardcoded `admin` ac
 **Using curl:**
 
 ```bash
-curl -k -u admin:<password> https://localhost:7091/api/tasks
+curl -u admin:<password> http://localhost:5298/api/tasks
 ```
 
 **Using Swagger UI:**
@@ -133,24 +152,24 @@ Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — update the `@pas
 
 ```bash
 # Login (no auth required)
-curl -k -X POST https://localhost:7091/api/auth/login \
+curl -X POST http://localhost:5298/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"<password>"}'
 
 # Create a task
-curl -k -u admin:<password> -X POST https://localhost:7091/api/tasks \
+curl -u admin:<password> -X POST http://localhost:5298/api/tasks \
   -H "Content-Type: application/json" \
   -d '{"title":"Finish report","priority":"High","dueDate":"2026-12-31T00:00:00Z"}'
 
 # List high-priority tasks, newest first
-curl -k -u admin:<password> \
-  "https://localhost:7091/api/tasks?priority=High&sortBy=createdAt&sortDirection=desc"
+curl -u admin:<password> \
+  "http://localhost:5298/api/tasks?priority=High&sortBy=createdAt&sortDirection=desc"
 
 # Mark a task as completed
-curl -k -u admin:<password> -X PATCH https://localhost:7091/api/tasks/1/complete
+curl -u admin:<password> -X PATCH http://localhost:5298/api/tasks/1/complete
 
 # Delete a task (soft delete)
-curl -k -u admin:<password> -X DELETE https://localhost:7091/api/tasks/1
+curl -u admin:<password> -X DELETE http://localhost:5298/api/tasks/1
 ```
 
 ### Response shape
@@ -222,9 +241,9 @@ dotnet test SoftOne.sln
 
 | Project | Tests | Covers |
 |---------|------:|--------|
-| SoftOne.Api.Tests | 31 | Middleware, validators, services, endpoints |
+| SoftOne.Api.Tests | 32 | Middleware, validators, services, endpoints |
 | SoftOne.Auth.Tests | 11 | PasswordHasher, AuthService credentials |
-| **Total** | **42** | |
+| **Total** | **43** | |
 
 Run a specific layer:
 
@@ -263,17 +282,3 @@ The API locks DLLs while it is running. Always stop it before running `dotnet bu
 - **Visual Studio:** press `Shift+F5`
 
 ---
-
-## Documentation
-
-All design documents live in the `docs/` folder:
-
-| File | Contents |
-|------|----------|
-| `architecture.md` | Layered architecture, middleware pipeline, auth flow |
-| `api-spec.md` | Full endpoint reference, request/response shapes |
-| `database-design.md` | Schema, EF Core config, soft delete strategy |
-| `prd.md` | Product requirements |
-| `implementation-plan.md` | Phase-by-phase build plan |
-| `testing-strategy.md` | Testing principles and test coverage guide |
-| `development-workflow.md` | Git workflow, Cursor AI usage, commit strategy |

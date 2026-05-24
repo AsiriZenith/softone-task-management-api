@@ -5,6 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddApplicationServices(builder.Configuration)
+    .AddFrontendCors(builder.Configuration)
     .AddSwaggerDocumentation();
 
 var app = builder.Build();
