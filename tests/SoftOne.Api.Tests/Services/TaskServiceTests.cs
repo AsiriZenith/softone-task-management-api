@@ -3,6 +3,7 @@ using SoftOne.Api.Data;
 using SoftOne.Api.Data.Entities;
 using SoftOne.Api.Data.Enums;
 using SoftOne.Api.DTOs.Requests;
+using SoftOne.Api.DTOs.Responses;
 using SoftOne.Api.Services;
 using SoftOne.Api.Tests.TestHelpers;
 
@@ -38,7 +39,7 @@ public class TaskServiceTests : IDisposable
         result.Title.Should().Be(request.Title);
         result.Description.Should().Be(request.Description);
         result.Priority.Should().Be(TaskPriority.High);
-        result.IsCompleted.Should().BeFalse();
+        result.Status.Should().Be(Status.Todo);
         result.DueDate.Should().Be(request.DueDate);
         result.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
@@ -71,14 +72,37 @@ public class TaskServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task MarkCompletedAsync_ExistingTask_SetsIsCompleted()
+    public async Task UpdateTaskStatusAsync_SetCompleted_UpdatesStatusAndIsCompleted()
     {
         var created = await _sut.CreateAsync(new CreateTaskRequest { Title = "To complete" });
 
-        var result = await _sut.MarkCompletedAsync(created.Id);
+        var result = await _sut.UpdateTaskStatusAsync(
+            created.Id,
+            new UpdateTaskStatusRequest { Status = Status.Completed });
 
         result.Should().NotBeNull();
-        result!.IsCompleted.Should().BeTrue();
+        result!.Status.Should().Be(Status.Completed);
+
+        var entity = await _context.Tasks.FindAsync(created.Id);
+        entity!.IsCompleted.Should().BeTrue();
+        entity.Status.Should().Be(Status.Completed);
+    }
+
+    [Fact]
+    public async Task UpdateTaskStatusAsync_SetInProgress_UpdatesStatusAndClearsIsCompleted()
+    {
+        var created = await _sut.CreateAsync(new CreateTaskRequest { Title = "Task" });
+        await _sut.UpdateTaskStatusAsync(
+            created.Id,
+            new UpdateTaskStatusRequest { Status = Status.Completed });
+
+        var result = await _sut.UpdateTaskStatusAsync(
+            created.Id,
+            new UpdateTaskStatusRequest { Status = Status.InProgress });
+
+        result!.Status.Should().Be(Status.InProgress);
+        var entity = await _context.Tasks.FindAsync(created.Id);
+        entity!.IsCompleted.Should().BeFalse();
     }
 
     [Fact]
@@ -91,10 +115,10 @@ public class TaskServiceTests : IDisposable
         deleted.Should().BeTrue();
 
         var byId = await _sut.GetByIdAsync(created.Id);
-        var all = await _sut.GetAllAsync();
+        var all = await _sut.GetAllAsync(pageSize: 50);
 
         byId.Should().BeNull();
-        all.Should().NotContain(t => t.Id == created.Id);
+        all.Items.Should().NotContain(t => t.Id == created.Id);
     }
 
     [Fact]
@@ -111,10 +135,10 @@ public class TaskServiceTests : IDisposable
         });
         await _context.SaveChangesAsync();
 
-        var results = await _sut.GetAllAsync();
+        var results = await _sut.GetAllAsync(pageSize: 50);
 
-        results.Should().HaveCount(1);
-        results[0].Title.Should().Be("Active task");
+        results.Items.Should().HaveCount(1);
+        results.Items.First().Title.Should().Be("Active task");
     }
 
     [Fact]
@@ -122,13 +146,15 @@ public class TaskServiceTests : IDisposable
     {
         var open = await _sut.CreateAsync(new CreateTaskRequest { Title = "Open" });
         var done = await _sut.CreateAsync(new CreateTaskRequest { Title = "Done" });
-        await _sut.MarkCompletedAsync(done.Id);
+        await _sut.UpdateTaskStatusAsync(
+            done.Id,
+            new UpdateTaskStatusRequest { Status = Status.Completed });
 
-        var completedOnly = await _sut.GetAllAsync(isCompleted: true);
-        var openOnly = await _sut.GetAllAsync(isCompleted: false);
+        var completedOnly = await _sut.GetAllAsync(isCompleted: true, pageSize: 50);
+        var openOnly = await _sut.GetAllAsync(isCompleted: false, pageSize: 50);
 
-        completedOnly.Should().ContainSingle(t => t.Id == done.Id);
-        openOnly.Should().ContainSingle(t => t.Id == open.Id);
+        completedOnly.Items.Should().ContainSingle(t => t.Id == done.Id);
+        openOnly.Items.Should().ContainSingle(t => t.Id == open.Id);
     }
 
     [Fact]
@@ -137,10 +163,10 @@ public class TaskServiceTests : IDisposable
         await _sut.CreateAsync(new CreateTaskRequest { Title = "Low", Priority = TaskPriority.Low });
         var high = await _sut.CreateAsync(new CreateTaskRequest { Title = "High", Priority = TaskPriority.High });
 
-        var results = await _sut.GetAllAsync(priority: TaskPriority.High);
+        var results = await _sut.GetAllAsync(priority: TaskPriority.High, pageSize: 50);
 
-        results.Should().ContainSingle(t => t.Id == high.Id);
-        results[0].Title.Should().Be("High");
+        results.Items.Should().ContainSingle(t => t.Id == high.Id);
+        results.Items.First().Title.Should().Be("High");
     }
 
     [Fact]
@@ -150,9 +176,9 @@ public class TaskServiceTests : IDisposable
         await Task.Delay(10);
         var newer = await _sut.CreateAsync(new CreateTaskRequest { Title = "Newer" });
 
-        var results = await _sut.GetAllAsync(sortBy: "createdAt", sortDescending: true);
+        var results = await _sut.GetAllAsync(sortBy: "createdAt", sortDescending: true, pageSize: 50);
 
-        results.Select(t => t.Id).Should().ContainInOrder(newer.Id, older.Id);
+        results.Items.Select(t => t.Id).Should().ContainInOrder(newer.Id, older.Id);
     }
 
     [Fact]
@@ -169,10 +195,65 @@ public class TaskServiceTests : IDisposable
             DueDate = DateTime.UtcNow.Date.AddDays(1)
         });
 
-        var results = await _sut.GetAllAsync(sortBy: "dueDate", sortDescending: false);
+        var results = await _sut.GetAllAsync(sortBy: "dueDate", sortDescending: false, pageSize: 50);
 
-        results[0].Id.Should().Be(sooner.Id);
-        results[^1].Title.Should().Be("Later");
+        results.Items.First().Id.Should().Be(sooner.Id);
+        results.Items.Last().Title.Should().Be("Later");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_DefaultPagination_ReturnsFirstPageWithMetadata()
+    {
+        for (var i = 1; i <= 7; i++)
+        {
+            await _sut.CreateAsync(new CreateTaskRequest { Title = $"Task {i}" });
+        }
+
+        var result = await _sut.GetAllAsync();
+
+        result.Page.Should().Be(1);
+        result.PageSize.Should().Be(5);
+        result.TotalCount.Should().Be(7);
+        result.TotalPages.Should().Be(2);
+        result.Items.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_SecondPage_ReturnsRemainingItems()
+    {
+        for (var i = 1; i <= 7; i++)
+        {
+            await _sut.CreateAsync(new CreateTaskRequest { Title = $"Task {i}" });
+        }
+
+        var result = await _sut.GetAllAsync(page: 2, pageSize: 5);
+
+        result.Page.Should().Be(2);
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_PageSizeExceedsMax_CapsAtFifty()
+    {
+        var result = await _sut.GetAllAsync(pageSize: 100);
+
+        result.PageSize.Should().Be(50);
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithFilter_TotalCountReflectsFilteredSet()
+    {
+        await _sut.CreateAsync(new CreateTaskRequest { Title = "Open", Priority = TaskPriority.Low });
+        var done = await _sut.CreateAsync(new CreateTaskRequest { Title = "Done", Priority = TaskPriority.High });
+        await _sut.UpdateTaskStatusAsync(
+            done.Id,
+            new UpdateTaskStatusRequest { Status = Status.Completed });
+
+        var result = await _sut.GetAllAsync(isCompleted: true, pageSize: 50);
+
+        result.TotalCount.Should().Be(1);
+        result.Items.Should().ContainSingle(t => t.Id == done.Id);
     }
 
     [Fact]
@@ -192,9 +273,11 @@ public class TaskServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task MarkCompletedAsync_NotFound_ReturnsNull()
+    public async Task UpdateTaskStatusAsync_NotFound_ReturnsNull()
     {
-        var result = await _sut.MarkCompletedAsync(9999);
+        var result = await _sut.UpdateTaskStatusAsync(
+            9999,
+            new UpdateTaskStatusRequest { Status = Status.Todo });
 
         result.Should().BeNull();
     }

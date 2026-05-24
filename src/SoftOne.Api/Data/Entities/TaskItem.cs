@@ -12,6 +12,8 @@ public class TaskItem
 
     public bool IsCompleted { get; set; }
 
+    public Status Status { get; set; } = Status.Todo;
+
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
 
     public DateTime? DueDate { get; set; }

@@ -15,7 +15,7 @@ public static class TaskEndpoints
 
         group.MapGet("/", GetAllTasksAsync)
             .WithName("GetTasks")
-            .Produces<ApiSuccessResponse<IReadOnlyList<TaskResponse>>>(StatusCodes.Status200OK)
+            .Produces<ApiSuccessResponse<PagedResponse<TaskResponse>>>(StatusCodes.Status200OK)
             .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized);
 
@@ -38,9 +38,10 @@ public static class TaskEndpoints
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
-        group.MapPatch("/{id:int}/complete", CompleteTaskAsync)
-            .WithName("CompleteTask")
+        group.MapPatch("/{id:int}/status", UpdateTaskStatusAsync)
+            .WithName("UpdateTaskStatus")
             .Produces<ApiSuccessResponse<TaskResponse>>(StatusCodes.Status200OK)
+            .Produces<ErrorResponse>(StatusCodes.Status400BadRequest)
             .Produces<ErrorResponse>(StatusCodes.Status401Unauthorized)
             .Produces<ErrorResponse>(StatusCodes.Status404NotFound);
 
@@ -59,7 +60,9 @@ public static class TaskEndpoints
         string? priority,
         string? sortBy,
         string? sortDirection,
-        CancellationToken cancellationToken)
+        int page = 1,
+        int pageSize = 5,
+        CancellationToken cancellationToken = default)
     {
         if (!TryParsePriority(priority, out var priorityFilter, out var priorityError))
         {
@@ -72,9 +75,11 @@ public static class TaskEndpoints
             priorityFilter,
             sortBy ?? "createdAt",
             sortDescending,
+            page,
+            pageSize,
             cancellationToken);
 
-        return Results.Ok(new ApiSuccessResponse<IReadOnlyList<TaskResponse>> { Data = tasks });
+        return Results.Ok(new ApiSuccessResponse<PagedResponse<TaskResponse>> { Data = tasks });
     }
 
     private static async Task<IResult> GetTaskByIdAsync(
@@ -129,12 +134,20 @@ public static class TaskEndpoints
         return Results.Ok(new ApiSuccessResponse<TaskResponse> { Data = task });
     }
 
-    private static async Task<IResult> CompleteTaskAsync(
+    private static async Task<IResult> UpdateTaskStatusAsync(
         int id,
+        UpdateTaskStatusRequest request,
         ITaskService taskService,
+        IValidator<UpdateTaskStatusRequest> validator,
         CancellationToken cancellationToken)
     {
-        var task = await taskService.MarkCompletedAsync(id, cancellationToken);
+        var validationError = await EndpointValidation.ValidateAsync(request, validator, cancellationToken);
+        if (validationError is not null)
+        {
+            return validationError;
+        }
+
+        var task = await taskService.UpdateTaskStatusAsync(id, request, cancellationToken);
         if (task is null)
         {
             return NotFoundResult();

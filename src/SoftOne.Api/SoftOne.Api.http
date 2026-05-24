@@ -12,7 +12,7 @@ Content-Type: application/json
 }
 
 ### List tasks
-GET {{SoftOne.Api_HostAddress}}/api/tasks?sortBy=createdAt&sortDirection=desc
+GET {{SoftOne.Api_HostAddress}}/api/tasks?page=1&pageSize=5&sortBy=createdAt&sortDirection=desc
 Authorization: Basic {{username}} {{password}}
 
 ### Create task
@@ -25,4 +25,13 @@ Content-Type: application/json
   "description": "Created from SoftOne.Api.http",
   "priority": "Medium",
   "dueDate": "2026-12-31T00:00:00Z"
+}
+
+### Update task status
+PATCH {{SoftOne.Api_HostAddress}}/api/tasks/1/status
+Authorization: Basic {{username}} {{password}}
+Content-Type: application/json
+
+{
+  "status": "Completed"
 }

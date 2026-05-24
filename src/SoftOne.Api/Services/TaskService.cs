@@ -16,13 +16,17 @@ public class TaskService : ITaskService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyList<TaskResponse>> GetAllAsync(
+    public async Task<PagedResponse<TaskResponse>> GetAllAsync(
         bool? isCompleted = null,
         TaskPriority? priority = null,
         string sortBy = "createdAt",
         bool sortDescending = false,
+        int? page = null,
+        int? pageSize = null,
         CancellationToken cancellationToken = default)
     {
+        var (normalizedPage, normalizedPageSize) = Pagination.Normalize(page, pageSize);
+
         var query = _dbContext.Tasks.AsNoTracking();
 
         if (isCompleted.HasValue)
@@ -37,8 +41,21 @@ public class TaskService : ITaskService
 
         query = ApplySorting(query, sortBy, sortDescending);
 
-        var tasks = await query.ToListAsync(cancellationToken);
-        return tasks.Select(MapToResponse).ToList();
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var tasks = await query
+            .Skip((normalizedPage - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResponse<TaskResponse>
+        {
+            Items = tasks.Select(MapToResponse).ToList(),
+            Page = normalizedPage,
+            PageSize = normalizedPageSize,
+            TotalCount = totalCount,
+            TotalPages = Pagination.CalculateTotalPages(totalCount, normalizedPageSize)
+        };
     }
 
     public async Task<TaskResponse?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
@@ -60,6 +77,7 @@ public class TaskService : ITaskService
             Description = request.Description,
             Priority = request.Priority ?? TaskPriority.Medium,
             DueDate = request.DueDate,
+            Status = Status.Todo,
             IsCompleted = false,
             IsDeleted = false
         };
@@ -93,7 +111,10 @@ public class TaskService : ITaskService
         return MapToResponse(task);
     }
 
-    public async Task<TaskResponse?> MarkCompletedAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<TaskResponse?> UpdateTaskStatusAsync(
+        int id,
+        UpdateTaskStatusRequest request,
+        CancellationToken cancellationToken = default)
     {
         var task = await _dbContext.Tasks
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
@@ -103,7 +124,7 @@ public class TaskService : ITaskService
             return null;
         }
 
-        task.IsCompleted = true;
+        ApplyStatus(task, request.Status);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return MapToResponse(task);
@@ -123,6 +144,12 @@ public class TaskService : ITaskService
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return true;
+    }
+
+    private static void ApplyStatus(TaskItem task, Status status)
+    {
+        task.Status = status;
+        task.IsCompleted = status == Status.Completed;
     }
 
     private static IQueryable<TaskItem> ApplySorting(
@@ -149,7 +176,7 @@ public class TaskService : ITaskService
             Id = task.Id,
             Title = task.Title,
             Description = task.Description,
-            IsCompleted = task.IsCompleted,
+            Status = task.Status,
             Priority = task.Priority,
             DueDate = task.DueDate,
             CreatedAt = task.CreatedAt,

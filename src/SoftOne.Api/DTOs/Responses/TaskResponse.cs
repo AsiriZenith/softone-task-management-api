@@ -10,7 +10,7 @@ public class TaskResponse
 
     public string? Description { get; init; }
 
-    public bool IsCompleted { get; init; }
+    public Status Status { get; init; }
 
     public TaskPriority Priority { get; init; }
 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SoftOne.Api.Data.Entities;
+using SoftOne.Api.Data.Enums;
 
 namespace SoftOne.Api.Data.Configurations;
 
@@ -22,6 +23,11 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
         builder.Property(t => t.IsCompleted)
             .IsRequired()
             .HasDefaultValue(false);
+
+        builder.Property(t => t.Status)
+            .IsRequired()
+            .HasConversion<int>()
+            .HasDefaultValue(Status.Todo);
 
         builder.Property(t => t.Priority)
             .IsRequired()
@@ -46,6 +52,7 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
 
         builder.HasIndex(t => t.IsDeleted);
         builder.HasIndex(t => t.IsCompleted);
+        builder.HasIndex(t => t.Status);
         builder.HasIndex(t => t.Priority);
     }
 }

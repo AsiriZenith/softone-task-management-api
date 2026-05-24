@@ -37,10 +37,13 @@ public class TaskEndpointsTests : IClassFixture<SoftOneWebApplicationFactory>
         var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<ApiSuccessResponse<IReadOnlyList<TaskResponse>>>();
+        var body = await response.Content.ReadFromJsonAsync<ApiSuccessResponse<PagedResponse<TaskResponse>>>();
         body.Should().NotBeNull();
         body!.Success.Should().BeTrue();
         body.Data.Should().NotBeNull();
+        body.Data.Page.Should().Be(1);
+        body.Data.PageSize.Should().Be(5);
+        body.Data.Items.Should().NotBeNull();
     }
 
     [Fact]

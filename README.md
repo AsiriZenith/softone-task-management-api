@@ -132,21 +132,23 @@ Open `src/SoftOne.Api/SoftOne.Api.http` in VS Code or Rider — update the `@pas
 
 | Method | Route | Auth required | Description |
 |--------|-------|:---:|-------------|
-| GET | `/api/tasks` | Yes | List active tasks |
+| GET | `/api/tasks` | Yes | List active tasks (paginated) |
 | GET | `/api/tasks/{id}` | Yes | Get a task by ID |
 | POST | `/api/tasks` | Yes | Create a task |
 | PUT | `/api/tasks/{id}` | Yes | Update a task |
-| PATCH | `/api/tasks/{id}/complete` | Yes | Mark as completed |
+| PATCH | `/api/tasks/{id}/status` | Yes | Update task status |
 | DELETE | `/api/tasks/{id}` | Yes | Soft delete a task |
 
 ### Query parameters for `GET /api/tasks`
 
-| Parameter | Values | Example |
-|-----------|--------|---------|
-| `isCompleted` | `true` / `false` | `?isCompleted=false` |
-| `priority` | `Low` / `Medium` / `High` | `?priority=High` |
-| `sortBy` | `createdAt` (default) / `dueDate` | `?sortBy=dueDate` |
-| `sortDirection` | `asc` (default) / `desc` | `?sortDirection=desc` |
+| Parameter | Values | Default | Example |
+|-----------|--------|---------|---------|
+| `page` | positive integer | `1` | `?page=2` |
+| `pageSize` | `1`–`50` | `5` | `?pageSize=10` |
+| `isCompleted` | `true` / `false` | — | `?isCompleted=false` |
+| `priority` | `Low` / `Medium` / `High` | — | `?priority=High` |
+| `sortBy` | `createdAt` (default) / `dueDate` | `createdAt` | `?sortBy=dueDate` |
+| `sortDirection` | `asc` (default) / `desc` | `asc` | `?sortDirection=desc` |
 
 ### Example requests
 
@@ -163,10 +165,12 @@ curl -u admin:<password> -X POST http://localhost:5298/api/tasks \
 
 # List high-priority tasks, newest first
 curl -u admin:<password> \
-  "http://localhost:5298/api/tasks?priority=High&sortBy=createdAt&sortDirection=desc"
+  "http://localhost:5298/api/tasks?page=1&pageSize=10&priority=High&sortBy=createdAt&sortDirection=desc"
 
-# Mark a task as completed
-curl -u admin:<password> -X PATCH http://localhost:5298/api/tasks/1/complete
+# Update task status
+curl -u admin:<password> -X PATCH http://localhost:5298/api/tasks/1/status \
+  -H "Content-Type: application/json" \
+  -d '{"status":"Completed"}'
 
 # Delete a task (soft delete)
 curl -u admin:<password> -X DELETE http://localhost:5298/api/tasks/1
@@ -174,7 +178,7 @@ curl -u admin:<password> -X DELETE http://localhost:5298/api/tasks/1
 
 ### Response shape
 
-**Success:**
+**Success (single task):**
 ```json
 {
   "success": true,
@@ -182,11 +186,25 @@ curl -u admin:<password> -X DELETE http://localhost:5298/api/tasks/1
     "id": 1,
     "title": "Finish report",
     "description": null,
-    "isCompleted": false,
+    "status": "Todo",
     "priority": "High",
     "dueDate": "2026-12-31T00:00:00Z",
     "createdAt": "2026-05-23T10:00:00Z",
     "updatedAt": null
+  }
+}
+```
+
+**Success (paginated list):**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [ { "id": 1, "title": "...", "status": "Todo", "priority": "High" } ],
+    "page": 1,
+    "pageSize": 5,
+    "totalCount": 12,
+    "totalPages": 3
   }
 }
 ```
@@ -241,9 +259,9 @@ dotnet test SoftOne.sln
 
 | Project | Tests | Covers |
 |---------|------:|--------|
-| SoftOne.Api.Tests | 32 | Middleware, validators, services, endpoints |
+| SoftOne.Api.Tests | 43 | Middleware, validators, services, endpoints |
 | SoftOne.Auth.Tests | 11 | PasswordHasher, AuthService credentials |
-| **Total** | **43** | |
+| **Total** | **54** | |
 
 Run a specific layer:
 
