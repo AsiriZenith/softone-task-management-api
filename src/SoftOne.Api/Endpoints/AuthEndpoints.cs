@@ -27,12 +27,14 @@ public static class AuthEndpoints
         CancellationToken cancellationToken)
     {
         var validationError = await EndpointValidation.ValidateAsync(request, validator, cancellationToken);
+
         if (validationError is not null)
         {
             return validationError;
         }
 
         var result = authService.ValidateCredentials(request.Username, request.Password);
+
         if (!result.IsAuthenticated)
         {
             return Results.Json(

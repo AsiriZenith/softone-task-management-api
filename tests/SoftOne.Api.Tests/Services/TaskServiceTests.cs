@@ -30,7 +30,7 @@ public class TaskServiceTests : IDisposable
             Title = "New task",
             Description = "Details",
             Priority = TaskPriority.High,
-            DueDate = DateTime.UtcNow.Date.AddDays(3)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(3)
         };
 
         var result = await _sut.CreateAsync(request);
@@ -58,7 +58,7 @@ public class TaskServiceTests : IDisposable
             Title = "Updated",
             Description = "Changed",
             Priority = TaskPriority.High,
-            DueDate = DateTime.UtcNow.Date.AddDays(10)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10)
         };
 
         var result = await _sut.UpdateAsync(created.Id, update);
@@ -187,12 +187,12 @@ public class TaskServiceTests : IDisposable
         await _sut.CreateAsync(new CreateTaskRequest
         {
             Title = "Later",
-            DueDate = DateTime.UtcNow.Date.AddDays(10)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(10)
         });
         var sooner = await _sut.CreateAsync(new CreateTaskRequest
         {
             Title = "Sooner",
-            DueDate = DateTime.UtcNow.Date.AddDays(1)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1)
         });
 
         var results = await _sut.GetAllAsync(sortBy: "dueDate", sortDescending: false, pageSize: 50);

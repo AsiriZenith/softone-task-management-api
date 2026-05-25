@@ -58,7 +58,7 @@ public class CreateTaskRequestValidatorTests
         var request = new CreateTaskRequest
         {
             Title = "Valid title",
-            DueDate = DateTime.UtcNow.Date.AddDays(-1)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(-1)
         };
 
         var result = _validator.Validate(request);
@@ -94,7 +94,7 @@ public class CreateTaskRequestValidatorTests
             Title = "Complete assignment",
             Description = "Finish Phase 6 validation",
             Priority = TaskPriority.High,
-            DueDate = DateTime.UtcNow.Date.AddDays(7)
+            DueDate = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7)
         };
 
         var result = _validator.Validate(request);

@@ -31,6 +31,7 @@ public class AuthenticationMiddleware
         }
 
         var result = authService.ValidateCredentials(username, password);
+
         if (!result.IsAuthenticated)
         {
             await MiddlewareResponseWriter.WriteErrorAsync(
@@ -41,6 +42,7 @@ public class AuthenticationMiddleware
         }
 
         context.Items["AuthenticatedUsername"] = result.Username;
+
         await _next(context);
     }
 

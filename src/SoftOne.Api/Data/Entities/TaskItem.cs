@@ -2,7 +2,7 @@ using SoftOne.Api.Data.Enums;
 
 namespace SoftOne.Api.Data.Entities;
 
-public class TaskItem
+public class TaskItem : IAuditableEntity
 {
     public int Id { get; set; }
 
@@ -16,7 +16,7 @@ public class TaskItem
 
     public TaskPriority Priority { get; set; } = TaskPriority.Medium;
 
-    public DateTime? DueDate { get; set; }
+    public DateOnly? DueDate { get; set; }
 
     public bool IsDeleted { get; set; }
 

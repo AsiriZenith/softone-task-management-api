@@ -1,5 +1,4 @@
 using FluentValidation;
-using SoftOne.Api.Data.Enums;
 using SoftOne.Api.DTOs.Requests;
 using SoftOne.Api.DTOs.Responses;
 using SoftOne.Api.Services;
@@ -64,7 +63,7 @@ public static class TaskEndpoints
         int pageSize = 5,
         CancellationToken cancellationToken = default)
     {
-        if (!TryParsePriority(priority, out var priorityFilter, out var priorityError))
+        if (!TaskQueryParameters.TryParsePriority(priority, out var priorityFilter, out var priorityError))
         {
             return priorityError!;
         }
@@ -90,7 +89,7 @@ public static class TaskEndpoints
         var task = await taskService.GetByIdAsync(id, cancellationToken);
         if (task is null)
         {
-            return NotFoundResult();
+            return EndpointResults.TaskNotFound();
         }
 
         return Results.Ok(new ApiSuccessResponse<TaskResponse> { Data = task });
@@ -128,7 +127,7 @@ public static class TaskEndpoints
         var task = await taskService.UpdateAsync(id, request, cancellationToken);
         if (task is null)
         {
-            return NotFoundResult();
+            return EndpointResults.TaskNotFound();
         }
 
         return Results.Ok(new ApiSuccessResponse<TaskResponse> { Data = task });
@@ -150,7 +149,7 @@ public static class TaskEndpoints
         var task = await taskService.UpdateTaskStatusAsync(id, request, cancellationToken);
         if (task is null)
         {
-            return NotFoundResult();
+            return EndpointResults.TaskNotFound();
         }
 
         return Results.Ok(new ApiSuccessResponse<TaskResponse> { Data = task });
@@ -164,38 +163,9 @@ public static class TaskEndpoints
         var deleted = await taskService.SoftDeleteAsync(id, cancellationToken);
         if (!deleted)
         {
-            return NotFoundResult();
+            return EndpointResults.TaskNotFound();
         }
 
         return Results.NoContent();
-    }
-
-    private static IResult NotFoundResult() =>
-        Results.Json(
-            ErrorResponse.CreateFailure("Task not found."),
-            statusCode: StatusCodes.Status404NotFound);
-
-    private static bool TryParsePriority(string? priority, out TaskPriority? value, out IResult? error)
-    {
-        value = null;
-        error = null;
-
-        if (string.IsNullOrWhiteSpace(priority))
-        {
-            return true;
-        }
-
-        if (Enum.TryParse<TaskPriority>(priority, ignoreCase: true, out var parsed)
-            && Enum.IsDefined(typeof(TaskPriority), parsed))
-        {
-            value = parsed;
-            return true;
-        }
-
-        error = Results.BadRequest(ErrorResponse.CreateFailure(
-            "Validation failed",
-            ["Priority must be a valid value (Low, Medium, or High)."]));
-
-        return false;
     }
 }

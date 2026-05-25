@@ -34,7 +34,7 @@ public class TaskItemConfiguration : IEntityTypeConfiguration<TaskItem>
             .HasConversion<int>();
 
         builder.Property(t => t.DueDate)
-            .HasColumnType("datetime2");
+            .HasColumnType("date");
 
         builder.Property(t => t.IsDeleted)
             .IsRequired()

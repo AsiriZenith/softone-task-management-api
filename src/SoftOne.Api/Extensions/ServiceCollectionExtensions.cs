@@ -1,4 +1,3 @@
-using SoftOne.Api.Configuration;
 using SoftOne.Api.Services;
 using SoftOne.Auth.Interfaces;
 using SoftOne.Auth.Services;
@@ -11,13 +10,10 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<AppSettings>(configuration.GetSection(AppSettings.SectionName));
-
         services.AddDatabase(configuration);
         services.AddValidation();
 
         services.AddScoped<IAuthService, AuthService>();
-
         services.AddScoped<ITaskService, TaskService>();
 
         return services;

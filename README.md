@@ -161,7 +161,7 @@ curl -X POST http://localhost:5298/api/auth/login \
 # Create a task
 curl -u admin:<password> -X POST http://localhost:5298/api/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title":"Finish report","priority":"High","dueDate":"2026-12-31T00:00:00Z"}'
+  -d '{"title":"Finish report","priority":"High","dueDate":"2026-12-31"}'
 
 # List high-priority tasks, newest first
 curl -u admin:<password> \
@@ -188,7 +188,7 @@ curl -u admin:<password> -X DELETE http://localhost:5298/api/tasks/1
     "description": null,
     "status": "Todo",
     "priority": "High",
-    "dueDate": "2026-12-31T00:00:00Z",
+    "dueDate": "2026-12-31",
     "createdAt": "2026-05-23T10:00:00Z",
     "updatedAt": null
   }

@@ -10,5 +10,5 @@ public class UpdateTaskRequest
 
     public TaskPriority? Priority { get; set; }
 
-    public DateTime? DueDate { get; set; }
+    public DateOnly? DueDate { get; set; }
 }

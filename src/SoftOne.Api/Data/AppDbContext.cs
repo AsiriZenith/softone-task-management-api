@@ -5,10 +5,7 @@ namespace SoftOne.Api.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options)
-    {
-    }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {}
 
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
 
@@ -32,9 +29,7 @@ public class AppDbContext : DbContext
 
     private void ApplyTimestamps()
     {
-        var entries = ChangeTracker.Entries<TaskItem>();
-
-        foreach (var entry in entries)
+        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {

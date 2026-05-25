@@ -24,7 +24,7 @@ Content-Type: application/json
   "title": "Sample task",
   "description": "Created from SoftOne.Api.http",
   "priority": "Medium",
-  "dueDate": "2026-12-31T00:00:00Z"
+  "dueDate": "2026-12-31"
 }
 
 ### Update task status

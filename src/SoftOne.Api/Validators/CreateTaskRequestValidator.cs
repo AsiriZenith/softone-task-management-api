@@ -16,7 +16,7 @@ public class CreateTaskRequestValidator : AbstractValidator<CreateTaskRequest>
             .When(x => !string.IsNullOrEmpty(x.Description));
 
         RuleFor(x => x.DueDate)
-            .Must(dueDate => dueDate!.Value.Date >= DateTime.UtcNow.Date)
+            .Must(dueDate => dueDate!.Value >= DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("Due date cannot be in the past.")
             .When(x => x.DueDate.HasValue);
 

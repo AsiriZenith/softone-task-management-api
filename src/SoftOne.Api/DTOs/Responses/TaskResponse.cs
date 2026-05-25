@@ -14,7 +14,7 @@ public class TaskResponse
 
     public TaskPriority Priority { get; init; }
 
-    public DateTime? DueDate { get; init; }
+    public DateOnly? DueDate { get; init; }
 
     public DateTime CreatedAt { get; init; }
 
